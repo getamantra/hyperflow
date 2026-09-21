@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Hyperflow Swagger APIs</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui.css" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://petstore.swagger.io/favicon-32x32.png"
+      sizes="32x32"
+    />
+  </head>
+  <body bgcolor="#dddddd">
+    <div id="swagger-ui"></div>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script>
+      window.onload = () => {
+        SwaggerUIBundle({
+          url: 'swagger.json',
+          dom_id: '#swagger-ui',
+        })
+      }
+    </script>
+  </body>
+</html>

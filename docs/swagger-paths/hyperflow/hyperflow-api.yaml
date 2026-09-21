@@ -1,0 +1,296 @@
+paths:
+  /hyperflow/api/execution/list:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get workflow execution list
+      description: Returns a paginated list of workflow executions with filters.
+      parameters:
+        - name: execution_id
+          in: query
+          schema:
+            type: string
+          example: QBOZQDTGIYVMURETAE7ZOZVZ2BIVYYE5
+        - name: workflow_id
+          in: query
+          schema:
+            type: string
+          example: E4U7OHRXXFADCIFJWTSFC46XNCASK2Z4
+        - name: search
+          in: query
+          schema:
+            type: string
+          example: basic_workflow
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [COMPLETED, FAILED, TERMINATED]
+          example: COMPLETED
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: 2025-01-15
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: 2025-04-15
+        - name: page
+          in: query
+          schema:
+            type: integer
+            example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Successful response with paginated workflow data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Invalid date format
+        '500':
+          description: Internal server error
+
+  /hyperflow/api/execution/{executionId}/tasklist:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get task list by executionId
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: task_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Missing executionId
+        '500':
+          description: Internal server error
+
+  /hyperflow/api/execution/stats:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get workflow execution stats for today
+      description: Returns today's execution statistics for a given workflow, including start/end times and associated tasks.
+      parameters:
+        - name: workflow_id
+          in: query
+          required: true
+          schema:
+            type: string
+          example: E4U7OHRXXFADCIFJWTSFC46XNCASK2Z4
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+          example: 50
+      responses:
+        '200':
+          description: Workflow execution stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                    example: '2025-06-23'
+                  totalExecutions:
+                    type: integer
+                    example: 5
+                  workflows:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        execution_id:
+                          type: string
+                        workflow_name:
+                          type: string
+                        start_time:
+                          type: string
+                          format: date-time
+                        end_time:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        tasks:
+                          type: array
+                          items:
+                            type: object
+        '400':
+          description: Missing workflow_id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: workflow_id is required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch workflow stats.
+
+  /hyperflow/api/execution/total:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get total execution count and stats percentages
+      description: Returns total workflow execution count along with success, failure, and active percentages.
+      parameters:
+        - name: tenant_id
+          in: query
+          required: false
+          schema:
+            type: string
+          example: '00000000000000000000000000000001'
+      responses:
+        '200':
+          description: Stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalExecutionCount:
+                    type: integer
+                    example: 150
+                  successPercentage:
+                    type: string
+                    example: '75.00%'
+                  failurePercentage:
+                    type: string
+                    example: '15.00%'
+                  activePercentage:
+                    type: string
+                    example: '10.00%'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch workflow stats
+                  error:
+                    type: string
+
+  /hyperflow/api/execution/{executionId}/global-variables:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get global variables of a workflow execution
+      description: Retrieves the global variables for a specific workflow execution.
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Global variables retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  variables:
+                    type: object
+                    example:
+                      globalVar1: 'value1'
+                      globalVar2:
+                        innerKey: 'innerValue'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal server error.
+
+  /hyperflow/api/execution/status-count:
+    get:
+      tags:
+        - Hyperflow-Backend-APIs
+      summary: Get workflow count by status
+      description: Returns a count of workflow executions by their current status.
+      responses:
+        '200':
+          description: Workflow status count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCount:
+                    type: object
+                    properties:
+                      COMPLETED:
+                        type: integer
+                      RUNNING:
+                        type: integer
+                      TERMINATED:
+                        type: integer
+                      PAUSE:
+                        type: integer
+                      RESUME:
+                        type: integer
+                      FAILED:
+                        type: integer
+        '500':
+          description: Internal server error

@@ -1,0 +1,243 @@
+paths:
+  /hyperflow/api/tasks:
+    post:
+      tags:
+        - Task
+      summary: Update task status and process next task
+      description: Updates the status of a task within a workflow and triggers the next task.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - workflowId
+                - taskReferenceName
+                - taskStatus
+                - taskId
+                - taskType
+              properties:
+                workflowId:
+                  type: string
+                  example: 'QBOZQDTGIYVMURETAE7ZOZVZ2BIVYYE5'
+                taskReferenceName:
+                  type: string
+                  example: 'f46d6d59-7fe2-4071-a1a8-64e10682a714'
+                taskStatus:
+                  type: string
+                  enum: [COMPLETED, FAILED, IN_PROGRESS, SCHEDULED]
+                  example: 'COMPLETED'
+                taskId:
+                  type: string
+                  example: 'BGBLXGJJJQCNYCFHVVDBNGTSPS6DSJYX'
+                outputData:
+                  type: object
+                  example:
+                    info: 'drive created successfully'
+                inputParameters:
+                  type: object
+                  additionalProperties: true
+                  example:
+                    param: 'value'
+                taskType:
+                  type: string
+                  example: 'END_WORKFLOW'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Task updated and next task polled.
+
+  /hyperflow/api/tasks/{taskId}:
+    get:
+      tags:
+        - Task
+      summary: Get task details by ID
+      description: Retrieves the task information based on the provided taskId.
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: The ID of the task.
+          schema:
+            type: string
+            example: YTVIIHJV7SV1KNT9EQCX9IKP3H9FJKL8
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    type: object
+                    additionalProperties: true
+                example:
+                  task:
+                    name: 'Send Email'
+                    taskReferenceName: 'f46d6d59-7fe2-4071-a1a8-64e10682a714'
+                    taskType: 'SIMPLE'
+                    inputParameters:
+                      connection: '08QE7MNA084C5WABN2DRY4WTMCEBWQRH'
+                    status: 'COMPLETED'
+                    taskId: 'YTVIIHJV7SV1KNT9EQCX9IKP3H9FJKL8'
+        '400':
+          description: Missing taskId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: taskId is required.
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Task not found.
+        '500':
+          description: Server error while retrieving task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  error:
+                    type: string
+                example:
+                  message: Failed to retrieve task.
+                  error: Something went wrong
+
+  /hyperflow/api/tasks/{taskId}/previous-activities:
+    get:
+      tags:
+        - Task
+      summary: Get previously executed activity parameters
+      description: >
+        Returns the input/output parameters of every activity task (SIMPLE, AGENT, WAIT)
+        that completed before the given task within the same workflow run, including
+        tasks that ran inside Switch and Loop constructs at any nesting depth. Repeated
+        executions of the same task (via GOTO) are deduplicated, keeping only the latest.
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: The ID of the task to fetch preceding activity parameters for.
+          schema:
+            type: string
+            example: YTVIIHJV7SV1KNT9EQCX9IKP3H9FJKL8
+        - name: workflowId
+          in: query
+          required: true
+          description: The workflow this task belongs to, used to disambiguate the taskId lookup.
+          schema:
+            type: string
+            example: QBOZQDTGIYVMURETAE7ZOZVZ2BIVYYE5
+      responses:
+        '200':
+          description: Previous activities input and output parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  workflowId:
+                    type: string
+                  currentTaskId:
+                    type: string
+                  tasks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        taskId:
+                          type: string
+                        taskReferenceName:
+                          type: string
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        status:
+                          type: string
+                        inputParameters:
+                          type: object
+                          additionalProperties: true
+                        outputParameters:
+                          type: object
+                          additionalProperties: true
+              example:
+                message: Previous activities input and output parameters fetched successfully.
+                workflowId: 'QBOZQDTGIYVMURETAE7ZOZVZ2BIVYYE5'
+                currentTaskId: 'BGBLXGJJJQCNYCFHVVDBNGTSPS6DSJYX'
+                tasks:
+                  - taskId: 'YTVIIHJV7SV1KNT9EQCX9IKP3H9FJKL8'
+                    taskReferenceName: 'create_folder_1'
+                    name: 'Create Drive Folder'
+                    type: 'SIMPLE'
+                    status: 'COMPLETED'
+                    inputParameters:
+                      folderName: 'Invoices'
+                    outputParameters:
+                      folderId: '1a2b3c'
+        '400':
+          description: Missing taskId or workflowId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                examples:
+                  missingTaskId:
+                    value:
+                      message: taskId is required.
+                  missingWorkflowId:
+                    value:
+                      message: workflowId is required.
+        '404':
+          description: Task not found for the given workflowId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Task not found for the given workflowId.
+        '500':
+          description: Server error while retrieving previous activity parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  error:
+                    type: string
+                example:
+                  message: Failed to retrieve previous activity parameters.
+                  error: Something went wrong

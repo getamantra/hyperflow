@@ -1,0 +1,16 @@
+{
+  "extends": "@adonisjs/tsconfig/tsconfig.app.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "./build",
+    "baseUrl": ".",
+    "paths": {
+      "#docs/*": ["docs/*"]
+    }
+    // "module": "CommonJS",
+    // "target": "ES2020",
+    // "strict": true
+  },
+  // "include": ["./"]
+  "exclude": ["node_modules", "build"]
+}

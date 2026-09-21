@@ -1,0 +1,550 @@
+paths:
+  /hyperflow/api/workflow:
+    post:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Start a new workflow execution
+      description: Validates and starts execution of a workflow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - version
+              properties:
+                name:
+                  type: string
+                  example: '00000000000000000000000000000001_basic_workflow'
+                version:
+                  type: number
+                  example: 1
+                variables:
+                  type: object
+                  example:
+                    globalVariables: ''
+
+      responses:
+        '200':
+          description: Workflow execution started or completed successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      status:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: Task updated and next task polled.
+                      workflowId:
+                        type: string
+                        example: 'QBOZQDTGIYVMURETAE7ZOZVZ2BIVYYE5'
+                  - type: object
+                    properties:
+                      status:
+                        type: integer
+                        example: 200
+                      message:
+                        type: string
+                        example: Workflow completed successfully.
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: The name field is required.
+        '500':
+          description: Failed to start workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 500
+                  message:
+                    type: string
+                    example: Failed to start workflow.
+                  error:
+                    type: string
+                    example: 'Workflow version not found in metadata.'
+
+  /hyperflow/api/workflow/{workflowId}:
+    get:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Get workflow by ID
+      description: Retrieves the details of a workflow using its ID.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: workflowId
+      responses:
+        '200':
+          description: Workflow fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow fetched successfully
+                  data:
+                    type: object
+                    additionalProperties: true
+                    example:
+                      name: 'Data Ingestion Workflow'
+                      version: '1.0.0'
+                      tasks:
+                        - name: 'Fetch from S3'
+                          type: 'http'
+        '400':
+          description: Missing workflow ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: workflowId is required.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'E_ROW_NOT_FOUND: Row not found'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: An error occurred while fetching the workflow
+                  error:
+                    type: string
+                    example: 'Workflow ID not valid or database error'
+
+    delete:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Delete a workflow
+      description: Deletes a workflow using its ID.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow to be deleted.
+      responses:
+        '200':
+          description: Workflow deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow deleted successfully.
+        '400':
+          description: Missing workflow ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: workflowId is required.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'E_ROW_NOT_FOUND: Row not found'
+        '500':
+          description: Failed to delete workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to delete workflow.
+                  error:
+                    type: string
+                    example: Database error or invalid workflowId
+
+    /hyperflow/api/workflow/{workflowId}/terminate:
+    put:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Terminate a workflow
+      description: Terminates an active workflow execution.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow to terminate.
+      responses:
+        '200':
+          description: Workflow terminated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow terminated successfully.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow not found.
+        '500':
+          description: Failed to terminate workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to terminate workflow.
+                  error:
+                    type: string
+                    example: Unexpected server error
+
+  /hyperflow/api/workflow/{workflowId}/pause:
+    put:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Pause a workflow
+      description: Pauses an active workflow.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow to pause.
+      responses:
+        '200':
+          description: Workflow paused successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow paused successfully.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow not found.
+        '500':
+          description: Failed to pause workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to pause workflow.
+                  error:
+                    type: string
+                    example: Unexpected error while pausing
+
+  /hyperflow/api/workflow/{workflowId}/resume:
+    put:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Resume a paused workflow
+      description: Resumes a paused workflow execution.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow to resume.
+      responses:
+        '200':
+          description: Workflow resumed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow resumed successfully.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow not found.
+        '500':
+          description: Failed to resume workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to resume workflow.
+                  error:
+                    type: string
+                    example: Unexpected error during resume
+
+  /hyperflow/api/workflow/{workflowId}/skiptask/{taskReferenceName}:
+    put:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Skip a specific task in a workflow
+      description: Skips the execution of a specific task using its reference name.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow.
+        - in: path
+          name: taskReferenceName
+          required: true
+          schema:
+            type: string
+          description: The reference name of the task to be skipped.
+      responses:
+        '200':
+          description: Task skipped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Task skipped and workflow resumed.
+        '404':
+          description: Workflow or task not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Task not found in workflow.
+        '500':
+          description: Failed to skip task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to skip task.
+                  error:
+                    type: string
+                    example: Internal server error
+
+  /hyperflow/api/workflow/{workflowId}/setvariables:
+    post:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Set or merge global variables in a workflow
+      description: Updates the global variables of a workflow by merging new values with existing ones.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              example:
+                globalVar1: newValue
+                globalVar2:
+                  innerKey: innerValue
+      responses:
+        '200':
+          description: Workflow variables updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  variables:
+                    type: object
+                example:
+                  message: Workflow variables updated successfully.
+                  variables:
+                    globalVar1: newValue
+                    globalVar2:
+                      innerKey: innerValue
+        '400':
+          description: Missing workflow ID or body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Object and key values are required
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow not found.
+        '500':
+          description: Failed to set variables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  error:
+                    type: string
+                example:
+                  message: Failed to set variables.
+                  error: Unexpected error message
+
+  /hyperflow/api/workflow/{workflowId}/resolvevariables:
+    post:
+      tags:
+        - Workflow (here workflowId means executionId)
+      summary: Resolve variables in a workflow
+      description: Resolves runtime variables based on the workflow definition and input variables.
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+          description: The ID of the workflow to resolve variables for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              example:
+                spreadsheetId: ${b12ad9da-03db-480f-8c1e-d89348fdce77_2.output.spreadsheetId}
+      responses:
+        '200':
+          description: Variables resolved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  ${b12ad9da-03db-480f-8c1e-d89348fdce77_2.output.spreadsheetId}: 1XSKuVVgv1oHAdVkVL83Fiv5FQxfCVUb49bCKPeIwcdQ
+        '400':
+          description: Missing workflow ID or request body
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Request body is required with variables.
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow not found.
+        '500':
+          description: Failed to retrieve variables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  error:
+                    type: string
+                example:
+                  message: Failed to retrieve variables.
+                  error: Unexpected error message

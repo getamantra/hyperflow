@@ -1,0 +1,140 @@
+paths:
+  /hyperflow/api/metadata/workflow:
+    post:
+      tags:
+        - Meta Workflow
+      summary: Register a new workflow definition
+      description: Registers a new workflow into the `meta_workflow_def` table.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - version
+              properties:
+                tenant_id:
+                  type: string
+                  example: '00000000000000000000000000000001'
+                tenant_name:
+                  type: string
+                  example: 'AIRA'
+                name:
+                  type: string
+                  example: '00000000000000000000000000000001_basic_workflow'
+                description:
+                  type: string
+                  example: 'testing'
+                version:
+                  type: number
+                  example: 1
+                status:
+                  type: number
+                  example: 1
+                restartable:
+                  type: boolean
+                  example: true
+                timeoutSeconds:
+                  type: number
+                  example: 0
+                timeoutPolicy:
+                  type: string
+                  example: 'ALERT_ONLY'
+                ownerEmail:
+                  type: string
+                  example: 'admin@aira.fr'
+                tasks:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - taskReferenceName
+                      - inputParameters
+                      - type
+                    properties:
+                      name:
+                        type: string
+                        example: 'Create Drive Folder'
+                      taskReferenceName:
+                        type: string
+                        example: '5bab5879-a1a0-4cbc-8d78-29cdd3fd7a8e'
+                      inputParameters:
+                        type: object
+                        example:
+                          connection: 'X3PG9QXY9BT7KSMKHPDNPKWOW5K5EWS8'
+                          folder_name: 'top'
+                      type:
+                        type: string
+                        example: 'SIMPLE'
+                      optional:
+                        type: boolean
+                        example: false
+                      timeoutSeconds:
+                        type: number
+                        example: 0
+                      retryCount:
+                        type: number
+                        example: 1
+                      retryDelaySeconds:
+                        type: number
+                        example: 60
+                      responseTimeoutSeconds:
+                        type: number
+                        example: 3600
+                      pollTimeoutSeconds:
+                        type: number
+                        example: 0
+                      retryLogic:
+                        type: string
+                        example: 'FIXED'
+                      timeoutPolicy:
+                        type: string
+                        example: 'TIME_OUT_WF'
+                      skipTask:
+                        type: number
+                        example: 0
+                      activityIcon:
+                        type: string
+                        example: 'svg/icons/Canvas/google_drive.svg'
+                      activityCode:
+                        type: string
+                        example: 'CREATE_FOLDER_DRIVE'
+      responses:
+        '200':
+          description: Workflow successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Workflow successfully registered!
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: The name field is required.
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal server error

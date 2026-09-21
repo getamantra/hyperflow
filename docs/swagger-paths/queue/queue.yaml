@@ -1,0 +1,505 @@
+paths:
+  /hyperflow/api/queue:
+    get:
+      tags:
+        - BullMQ (Redis)
+      summary: Retrieve cached data by key
+      description: Fetches cached data from Redis using the provided key.
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          example: my-cache-key
+      responses:
+        '200':
+          description: Cached data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    description: The cached data.
+        '400':
+          description: Missing key parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Key query parameter is required
+        '404':
+          description: Key not found in cache
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Key not found in cache
+        '500':
+          description: Error retrieving cache
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error retrieving cache
+                  error:
+                    type: string
+    post:
+      tags:
+        - BullMQ (Redis)
+      summary: Store data in cache
+      description: Stores a key-value pair in Redis cache.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key
+                - data
+              properties:
+                key:
+                  type: string
+                  description: Cache key.
+                  example: my-cache-key
+                data:
+                  type: object
+                  description: Data to cache.
+                  example:
+                    value: 'some data'
+      responses:
+        '200':
+          description: Data stored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Data stored with key: my-cache-key'
+        '400':
+          description: Missing key or data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Key and data are required
+        '404':
+          description: Key and data not set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Key and data not set
+        '500':
+          description: Error storing data in cache
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error storing data in cache
+                  error:
+                    type: string
+    delete:
+      tags:
+        - BullMQ (Redis)
+      summary: Delete cached data by key
+      description: Deletes a key and its corresponding data from Redis cache.
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          example: my-cache-key
+      responses:
+        '200':
+          description: Cache key deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Key and data deleted for key: my-cache-key'
+        '400':
+          description: Missing key parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Key query parameter is required
+        '404':
+          description: Key not found in cache
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Key "my-cache-key" not found in cache'
+        '500':
+          description: Error deleting cache key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error in deleteCacheKeyAndData function
+                  error:
+                    type: string
+
+  /hyperflow/api/queue/add-bulk-tasks:
+    post:
+      tags:
+        - BullMQ (Redis)
+      summary: Add bulk tasks to queue
+      description: Adds multiple tasks to the default admin queue for testing purposes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tasks
+              properties:
+                tasks:
+                  type: array
+                  description: Array of tasks to add to the queue.
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: 'Create Drive Folder'
+                      data:
+                        type: object
+                      opts:
+                        type: object
+                        properties:
+                          priority:
+                            type: integer
+                            example: 0
+                          tags:
+                            type: array
+                            items:
+                              type: string
+      responses:
+        '200':
+          description: Tasks added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: '5 tasks added to the queue successfully.'
+        '400':
+          description: Invalid tasks input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid tasks input. Provide an array of tasks.
+        '500':
+          description: Error adding tasks to queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /hyperflow/api/queue/delete-queue:
+    post:
+      tags:
+        - BullMQ (Redis)
+      summary: Empty/Delete a queue
+      description: If the method used is `drain`, it will empty the queue by removing all jobs.If the method used is `obliterate`, it will delete the entire queue along with all its data(only when no active jobs)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - queueName
+              properties:
+                queueName:
+                  type: string
+                  description: Name of the queue to empty/delete.
+                  example: orchestration-queue
+      responses:
+        '200':
+          description: Queue emptied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Queue emptied successfully.
+        '400':
+          description: Missing queue name
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                example:
+                  error: Queue name is required.
+        '500':
+          description: Error while emptying queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                example:
+                  error: Redis connection failed or invalid queue.
+
+  /hyperflow/api/queue/jobs:
+    get:
+      tags:
+        - BullMQ (Redis)
+      summary: Get jobs from a queue by status
+      description: Returns paginated job data from the queue and status.
+      parameters:
+        - name: queueName
+          in: query
+          required: true
+          schema:
+            type: string
+          example: orchestration-queue
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [waiting, active, completed, failed, prioritized, delayed]
+          example: completed
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          example: 10
+      responses:
+        '200':
+          description: Successfully fetched queue jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 2
+                      per_page:
+                        type: integer
+                        example: 10
+                      current_page:
+                        type: integer
+                        example: 1
+                      last_page:
+                        type: integer
+                        example: 2
+                      first_page:
+                        type: integer
+                        example: 1
+                      first_page_url:
+                        type: string
+                        example: '?page=1'
+                      last_page_url:
+                        type: string
+                        example: '?page=2'
+                      next_page_url:
+                        type: string
+                        example: '?page=2'
+                      previous_page_url:
+                        type: string
+                        nullable: true
+                        example: null
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: '1'
+                        name:
+                          type: string
+                          example: 'Create Drive Folder'
+                        data:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              example: 'Create Drive Folder'
+                            taskReferenceName:
+                              type: string
+                              example: '5bab5879-a1a0-4cbc-8d78-29cdd3fd7a8e'
+                            type:
+                              type: string
+                              example: 'SIMPLE'
+                            inputParameters:
+                              type: object
+                              properties:
+                                connection:
+                                  type: string
+                                  example: 'X3PG9QXY9BT7KSMKHPDNPKWOW5K5EWS8'
+                                folder_name:
+                                  type: string
+                                  example: 'top'
+                            retryCount:
+                              type: integer
+                              example: 1
+                            optional:
+                              type: boolean
+                              example: false
+                            retryDelaySeconds:
+                              type: integer
+                              example: 60
+                            timeoutSeconds:
+                              type: integer
+                              example: 0
+                            responseTimeoutSeconds:
+                              type: integer
+                              example: 3600
+                            pollTimeoutSeconds:
+                              type: integer
+                              example: 0
+                            timeoutPolicy:
+                              type: string
+                              example: 'TIME_OUT_WF'
+                            skipTask:
+                              type: integer
+                              example: 0
+                            activityCode:
+                              type: string
+                              example: 'CREATE_FOLDER_DRIVE'
+                            activityIcon:
+                              type: string
+                              example: 'svg/icons/Canvas/google_drive.svg'
+                            taskType:
+                              type: string
+                              example: 'SIMPLE'
+                            status:
+                              type: string
+                              example: 'SCHEDULED'
+                            workflowInstanceId:
+                              type: string
+                              example: 'E4U7OHRXXFADCIFJWTSFC46XNCASK2Z4'
+                            taskId:
+                              type: string
+                              example: 'LKZC3TVZX5QGI4QMVUJSOBRWASZOIELF'
+                            scheduledTime:
+                              type: integer
+                              example: 1750071891
+                            startTime:
+                              type: integer
+                              example: 1750071891
+                            workFlowType:
+                              type: string
+                              example: '00000000000000000000000000000001_dowhile_with_switch'
+                            taskDefName:
+                              type: string
+                              example: 'Create Drive Folder'
+                            referenceTaskName:
+                              type: string
+                              example: '5bab5879-a1a0-4cbc-8d78-29cdd3fd7a8e'
+                            previousTaskEndTime:
+                              type: integer
+                              nullable: true
+                              example: null
+                        finishedOn:
+                          type: string
+                          example: ''
+                        processedOn:
+                          type: string
+                          example: ''
+                        failedReason:
+                          type: string
+                          example: ''
+                        metadata:
+                          type: array
+                          items:
+                            type: string
+                          example: []
+                        priority:
+                          type: integer
+                          example: 0
+                        state:
+                          type: string
+                          example: 'waiting'
+        '400':
+          description: Missing or invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Queue name and status are required.
+        '500':
+          description: Server error while fetching jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal server error
